@@ -33,8 +33,8 @@ def test_userchat(index_name, user_input, thread_id):
         # Create retriever
         retriever = vector_store.as_retriever(search_type="similarity", search_kwargs={"k": 4})
 
-        # Smart Answer from Knowledge Base
-        def smart_answer(query: str) -> str:
+        # Answer from Knowledge Base (file)
+        def file_search(query: str) -> str:
             qa = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
             return qa.run(query)
 
@@ -66,9 +66,9 @@ def test_userchat(index_name, user_input, thread_id):
                 return "Error during web search."
 
         # Define tools
-        smart_tool = Tool(
-            name="SmartAnswer",
-            func=smart_answer,
+        file_tool = Tool(
+            name="File Search",
+            func= file_search,
             description=(
                 "Use this first for all technical, company, or product questions. "
                 "It retrieves from a domain-specific knowledge base. "
@@ -84,7 +84,7 @@ def test_userchat(index_name, user_input, thread_id):
 
         # Initialize Agent
         agent = initialize_agent(
-            tools=[smart_tool, web_tool],
+            tools=[file_tool, web_tool],
             llm=llm,
             agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             handle_parsing_errors=True,
