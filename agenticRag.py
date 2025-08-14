@@ -2,32 +2,32 @@ import re
 import logging
 from langchain.chains import RetrievalQA
 from langchain.agents import initialize_agent, Tool, AgentType
+from langchain.vectorstores import Chroma
+from langchain.embeddings import HuggingFaceEmbeddings  
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 def test_userchat(index_name, user_input, thread_id):
     try:
-        DATABASE_URL = "mysql+mysqlconnector://root:@localhost:3306/history"
-
         # Validate inputs
         if not index_name or not user_input or not thread_id:
             raise ValueError("collection_name, user_input, and thread_id are required")
 
-        # Prepare collection name
+        # Prepare collection name (assuming this function exists)
         collection_withoutSpace = updated_collection_name(index_name)
 
-        # Check if collection exists
+        # Check if collection exists (adapted for Chroma)
         if not utility.has_collection(collection_withoutSpace):
             logger.info(f"Collection '{collection_withoutSpace}' does not exist.")
             return {"message": f"Collection '{collection_withoutSpace}' does not exist."}
 
-        # Connect to Milvus vector store
-        connection_args = {'uri': milvus_url}
-        vector_store = Milvus(
-            embedding_function=hf,
+        # Connect to Chroma vector store
+        embedding_fn = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        vector_store = Chroma(
             collection_name=collection_withoutSpace,
-            connection_args=connection_args
+            persist_directory="./chroma_db",  # Path to your persisted Chroma DB
+            embedding_function=embedding_fn
         )
 
         # Create retriever
@@ -82,15 +82,13 @@ def test_userchat(index_name, user_input, thread_id):
             description="Use this to search the internet for up-to-date information."
         )
 
-        
         # Initialize Agent
         agent = initialize_agent(
             tools=[smart_tool, web_tool],
             llm=llm,
             agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             handle_parsing_errors=True,
-            verbose=True,
-           
+            verbose=True
         )
 
         # Run agent
